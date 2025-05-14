@@ -4,10 +4,10 @@ from enum import Enum
 from datetime import datetime
 
 class DataSourceType(str, Enum):
-    MYSQL = "MySQL"
-    POSTGRESQL = "PostgreSQL"
+    MYSQL = "MYSQL"
+    POSTGRESQL = "POSTGRESQL"
     CSV = "CSV"
-    EXCEL = "Excel"
+    EXCEL = "EXCEL"
     API = "API"
     # Add other types as needed
 

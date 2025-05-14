@@ -23,7 +23,14 @@ const DataSourcesPage: React.FC = () => {
             console.log('正在获取数据源...');
             const data = await dataSourcesApi.getDataSources();
             console.log('获取成功, 数据:', data);
-            setDataSources(data);
+            
+            // 处理后端返回的数据，将connection_params转为前端的connectionParams
+            const processedData = data.map(ds => ({
+                ...ds,
+                connectionParams: (ds as any).connection_params, // 使用类型断言
+            }));
+            
+            setDataSources(processedData);
         } catch (error) {
             console.error('获取数据源失败:', error);
             if (axios.isAxiosError(error)) {
@@ -56,13 +63,23 @@ const DataSourcesPage: React.FC = () => {
     // 处理搜索
     const filteredDataSources = dataSources.filter(ds => 
         ds.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        ds.database?.toLowerCase().includes(searchText.toLowerCase()) ||
-        ds.host?.toLowerCase().includes(searchText.toLowerCase())
+        ds.connectionParams?.database?.toString().toLowerCase().includes(searchText.toLowerCase()) ||
+        ds.connectionParams?.host?.toString().toLowerCase().includes(searchText.toLowerCase())
     );
 
     // 打开编辑模态框
     const handleEdit = (dataSource: DataSource) => {
-        setCurrentDataSource(dataSource);
+        // 将connectionParams中的字段提取到顶层
+        const editableDataSource = {
+            ...dataSource,
+            host: dataSource.connectionParams?.host,
+            port: dataSource.connectionParams?.port,
+            database: dataSource.connectionParams?.database,
+            username: dataSource.connectionParams?.username,
+            password: dataSource.connectionParams?.password,
+        };
+        
+        setCurrentDataSource(editableDataSource);
         setModalVisible(true);
     };
 
@@ -130,18 +147,18 @@ const DataSourcesPage: React.FC = () => {
         },
         {
             title: '主机',
-            dataIndex: 'host',
             key: 'host',
+            render: (_, record) => record.connectionParams?.host || '',
         },
         {
             title: '端口',
-            dataIndex: 'port',
             key: 'port',
+            render: (_, record) => record.connectionParams?.port || '',
         },
         {
             title: '数据库',
-            dataIndex: 'database',
             key: 'database',
+            render: (_, record) => record.connectionParams?.database || '',
         },
         {
             title: '状态',
