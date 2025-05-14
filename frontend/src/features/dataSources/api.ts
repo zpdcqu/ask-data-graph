@@ -161,6 +161,52 @@ export const dataSourcesApi = {
         
         const response = await api.post('/data-sources/test-connection', requestBody);
         return response.data;
+    },
+
+    // 同步数据源元数据
+    syncMetadata: async (id: string | number): Promise<{message: string, status: string, tables_count: number, columns_count: number}> => {
+        const response = await api.post(`/db-schema-metadata/data-sources/${id}/sync`);
+        return response.data;
+    },
+
+    // 获取数据源所有表结构元数据
+    getTableMetadata: async (id: string | number): Promise<any[]> => {
+        const response = await api.get(`/db-schema-metadata/data-sources/${id}`);
+        return response.data;
+    },
+
+    // 获取数据源表名列表
+    getTablesList: async (id: string | number): Promise<string[]> => {
+        const response = await api.get(`/db-schema-metadata/data-sources/${id}/tables`);
+        return response.data;
+    },
+
+    // 自动处理数据源 - 新建数据源后的自动流程
+    autoProcessDataSource: async (id: string | number): Promise<{success: boolean, messages: string[]}> => {
+        try {
+            const messages: string[] = [];
+            
+            // 1. 同步元数据
+            const syncResult = await dataSourcesApi.syncMetadata(id);
+            messages.push(`元数据同步成功: ${syncResult.tables_count}张表, ${syncResult.columns_count}个字段`);
+            
+            // 2. 分析表关系
+            // 导入 dataModelingApi 避免循环依赖
+            const { analyzeRelationships } = await import('../dataModeling/api').then(module => module.default);
+            const relationshipResult = await analyzeRelationships(id);
+            messages.push(`表关系分析成功: 发现${relationshipResult.count}个关系`);
+
+            return {
+                success: true,
+                messages
+            };
+        } catch (error) {
+            console.error('自动处理数据源失败:', error);
+            return {
+                success: false,
+                messages: [(error as Error).message || '处理失败，请稍后重试']
+            };
+        }
     }
 };
 

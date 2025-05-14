@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Button, Space, Typography, Tag, Popconfirm, message, Input, Row, Col } from 'antd';
-import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Table, Button, Space, Typography, Tag, Popconfirm, message, Input, Row, Col, Tooltip, Modal } from 'antd';
+import { PlusOutlined, SearchOutlined, EditOutlined, DeleteOutlined, CheckCircleOutlined, ExclamationCircleOutlined, ApiOutlined, SyncOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { DataSource, DataSourceType, CreateDataSourceRequest, UpdateDataSourceRequest } from './types';
 import DataSourceFormModal from './DataSourceFormModal';
@@ -15,6 +15,9 @@ const DataSourcesPage: React.FC = () => {
     const [searchText, setSearchText] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [currentDataSource, setCurrentDataSource] = useState<DataSource | null>(null);
+    const [processingId, setProcessingId] = useState<string | number | null>(null);
+    const [autoProcessMessages, setAutoProcessMessages] = useState<string[]>([]);
+    const [messageModalVisible, setMessageModalVisible] = useState(false);
 
     // 加载数据源列表
     const fetchDataSources = async () => {
@@ -99,20 +102,67 @@ const DataSourcesPage: React.FC = () => {
         }
     };
 
+    // 自动处理数据源 - 同步元数据和分析表关系
+    const handleAutoProcess = async (id: string | number) => {
+        setProcessingId(id);
+        setAutoProcessMessages([]);
+        try {
+            // 显示加载提示
+            const loadingMsg = message.loading({ content: '正在处理数据源...', key: 'autoProcess', duration: 0 });
+            
+            // 开始自动处理
+            const result = await dataSourcesApi.autoProcessDataSource(id);
+            
+            // 关闭加载提示
+            loadingMsg();
+            
+            // 显示处理结果
+            if (result.success) {
+                message.success('数据源处理成功');
+                setAutoProcessMessages(result.messages);
+                setMessageModalVisible(true);
+            } else {
+                message.error('处理失败: ' + result.messages[0]);
+            }
+            
+            // 重新加载数据源列表
+            fetchDataSources();
+        } catch (error) {
+            console.error('处理数据源失败:', error);
+            message.error('处理失败，请稍后重试');
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     // 处理模态框保存
-    const handleFormSave = async (values: DataSource) => {
+    const handleFormSave = async (values: DataSource, autoProcess: boolean) => {
         setLoading(true);
         try {
+            let savedDataSource: DataSource;
+            
             if (currentDataSource) {
                 // 更新现有数据源 - 移除id字段，避免重复
                 const { id, ...updateData } = values;
-                await dataSourcesApi.updateDataSource(currentDataSource.id, updateData);
+                savedDataSource = await dataSourcesApi.updateDataSource(currentDataSource.id, updateData);
                 message.success('数据源已更新');
             } else {
                 // 添加新数据源
-                await dataSourcesApi.createDataSource(values as CreateDataSourceRequest);
+                savedDataSource = await dataSourcesApi.createDataSource(values as CreateDataSourceRequest);
                 message.success('数据源已创建');
+                
+                // 如果勾选了自动处理，则自动进行元数据同步和表关系分析
+                if (autoProcess) {
+                    // 关闭当前表单模态框
+                    setModalVisible(false);
+                    setCurrentDataSource(null);
+                    
+                    // 启动自动处理
+                    await handleAutoProcess(savedDataSource.id);
+                    return; // 提前返回，避免重复刷新
+                }
             }
+            
             // 关闭模态框并重新加载数据
             setModalVisible(false);
             setCurrentDataSource(null);
@@ -195,6 +245,16 @@ const DataSourcesPage: React.FC = () => {
                     <Button type="text" icon={<EditOutlined />} onClick={() => handleEdit(record)}>
                         编辑
                     </Button>
+                    <Tooltip title="处理数据源：同步元数据和分析表关系">
+                        <Button 
+                            type="text" 
+                            icon={<SyncOutlined spin={processingId === record.id} />} 
+                            onClick={() => handleAutoProcess(record.id)}
+                            loading={processingId === record.id}
+                        >
+                            处理
+                        </Button>
+                    </Tooltip>
                     <Popconfirm
                         title="确定删除此数据源吗？"
                         description="此操作不可撤销，关联的数据可能受到影响。"
@@ -263,6 +323,25 @@ const DataSourcesPage: React.FC = () => {
                 }}
                 onSave={handleFormSave}
             />
+
+            {/* 自动处理结果显示模态框 */}
+            <Modal
+                title="数据源处理结果"
+                open={messageModalVisible}
+                onOk={() => setMessageModalVisible(false)}
+                onCancel={() => setMessageModalVisible(false)}
+                footer={[
+                    <Button key="ok" type="primary" onClick={() => setMessageModalVisible(false)}>
+                        确定
+                    </Button>
+                ]}
+            >
+                <ul>
+                    {autoProcessMessages.map((msg, index) => (
+                        <li key={index}>{msg}</li>
+                    ))}
+                </ul>
+            </Modal>
         </div>
     );
 };

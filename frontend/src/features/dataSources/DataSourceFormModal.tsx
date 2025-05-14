@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, InputNumber, Button, Space, message, Divider } from 'antd';
+import { Modal, Form, Input, Select, InputNumber, Button, Space, message, Divider, Checkbox } from 'antd';
 import { DatabaseOutlined, PlayCircleOutlined } from '@ant-design/icons';
 import { DataSource, DataSourceType, TestConnectionRequest } from './types';
 import dataSourcesApi from './api';
@@ -8,7 +8,7 @@ interface DataSourceFormModalProps {
     visible: boolean;
     dataSource: DataSource | null;
     onCancel: () => void;
-    onSave: (dataSource: DataSource) => void;
+    onSave: (dataSource: DataSource, autoProcess: boolean) => void;
 }
 
 const { Option } = Select;
@@ -22,6 +22,7 @@ const DataSourceFormModal: React.FC<DataSourceFormModalProps> = ({
     const [form] = Form.useForm();
     const [testLoading, setTestLoading] = useState(false);
     const [selectedType, setSelectedType] = useState<DataSourceType>(dataSource?.type || DataSourceType.MYSQL);
+    const [autoProcess, setAutoProcess] = useState(true);
 
     // 当dataSource变化时，重置表单
     useEffect(() => {
@@ -30,9 +31,11 @@ const DataSourceFormModal: React.FC<DataSourceFormModalProps> = ({
             if (dataSource) {
                 form.setFieldsValue(dataSource);
                 setSelectedType(dataSource.type);
+                setAutoProcess(false); // 编辑模式不自动处理
             } else {
                 form.setFieldsValue({ type: DataSourceType.MYSQL });
                 setSelectedType(DataSourceType.MYSQL);
+                setAutoProcess(true); // 新建模式默认自动处理
             }
         }
     }, [visible, dataSource, form]);
@@ -72,7 +75,7 @@ const DataSourceFormModal: React.FC<DataSourceFormModalProps> = ({
     const handleSubmit = async () => {
         try {
             const values = await form.validateFields();
-            onSave(values as DataSource);
+            onSave(values as DataSource, autoProcess);
         } catch (error) {
             console.error('表单验证失败:', error);
         }
@@ -225,6 +228,17 @@ const DataSourceFormModal: React.FC<DataSourceFormModalProps> = ({
                 <Form.Item name="description" label="描述">
                     <Input.TextArea rows={3} placeholder="可选：添加对此数据源的描述" />
                 </Form.Item>
+
+                {!dataSource && (
+                    <Form.Item>
+                        <Checkbox 
+                            checked={autoProcess} 
+                            onChange={(e) => setAutoProcess(e.target.checked)}
+                        >
+                            保存后自动进行元数据同步和表关系分析
+                        </Checkbox>
+                    </Form.Item>
+                )}
             </Form>
         </Modal>
     );

@@ -15,6 +15,7 @@ import {
     SettingOutlined, // For Settings
     LogoutOutlined, // For Logout
     HomeOutlined, // For Home/Dashboard
+    TableOutlined, // For Data Modeling
 } from '@ant-design/icons';
 import { Link, useLocation, Outlet } from 'react-router-dom'; // Outlet for nested routes
 
@@ -43,6 +44,7 @@ const menuItems: MenuItem[] = [
         ]
     },
     { key: 'data-sources', label: '数据源管理', icon: <DatabaseOutlined />, path: '/data-sources' },
+    { key: 'data-modeling', label: '数据建模', icon: <TableOutlined />, path: '/data-modeling' },
     { key: 'nl2sql', label: '智能问答', icon: <QuestionCircleOutlined />, path: '/nl2sql' },
     // Add more top-level or nested menu items based on front_end.md
 ];

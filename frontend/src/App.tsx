@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import MainLayout from './layouts/MainLayout'; // Import the new layout
 import KGVisualizationPage from './features/kgVisualization/KGVisualizationPage'; // Uncommented
 import DataSourcesPage from './features/dataSources/DataSourcesPage'; // Import the actual DataSourcesPage
+import DataModelingPage from './features/dataModeling'; // Import the new DataModelingPage
 import './App.css'; // Assuming you have App.css for global app styles
 
 // Placeholder for KGVisualizationPage until we create it - REMOVE THIS or keep for other tests
@@ -53,6 +54,7 @@ function App() {
                   <Route index element={<HomePage />} /> {/* Default route for / shows HomePage */}
                   <Route path="kg-visualization" element={<KGVisualizationPage />} />
                   <Route path="data-sources" element={<DataSourcesPage />} />
+                  <Route path="data-modeling" element={<DataModelingPage />} />
                   <Route path="kg-pipelines" element={<KGPipelinesPage />} />
                   <Route path="nl2sql" element={<NL2SQLPage />} />
                   <Route path="profile" element={<ProfilePage />} />
