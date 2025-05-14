@@ -1,0 +1,48 @@
+# 知识图谱智能问答系统服务配置
+
+# 项目基本设置
+project:
+  name: "知识图谱智能问答系统 "
+  api_version: "/api/v1"
+
+# 数据库配置（MySQL）
+database:
+  host: "localhost"  # 数据库主机地址
+  port: 3306         # 数据库端口
+  user: "root"       # 数据库用户名
+  password: "123456"  # 数据库密码
+  name: "graph"  # 数据库名称
+  # 显式指定使用PyMySQL驱动
+  url: "mysql+pymysql://root:123456@localhost:3306/graph"
+
+# 安全配置
+security:
+  secret_key: "your_production_secret_key_please_change_me"
+  algorithm: "HS256"
+  access_token_expire_minutes: 11520  # 8天 = 60 * 24 * 8
+
+# Nebula Graph配置
+nebula_graph:
+  host: "localhost"
+  port: 9669
+  user: "root"
+  password: "nebula"
+  space_name: "knowledge_graph"
+  vis_default_neighbor_limit: 25  # 可视化时默认的邻居节点限制数
+
+# 初始超级管理员配置
+first_superuser:
+  username: "admin"
+  email: "admin@example.com"
+  password: "admin_strong_password"  # 建议使用更复杂的密码
+
+# OpenAI API配置（如果需要）
+openai:
+  api_key: ""  # 填入你的OpenAI API密钥
+
+# 服务配置
+service:
+  host: "0.0.0.0"
+  port: 8000
+  workers: 4  # Uvicorn工作进程数
+  log_level: "info"  # 日志级别：debug, info, warning, error, critical

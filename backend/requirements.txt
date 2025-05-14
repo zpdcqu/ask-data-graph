@@ -1,0 +1,16 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+mysqlclient # For MySQL
+pymysql # Alternative MySQL driver (pure Python implementation)
+cryptography # Required for PyMySQL with SSL
+litellm
+python-jose[cryptography] # For JWT
+passlib[bcrypt] # For password hashing
+python-dotenv # For .env file
+nebula3-python
+pyyaml # For YAML configuration file
+pydantic-settings # For BaseSettings support in Pydantic v2+
+email-validator # For EmailStr validation
+python-multipart # For handling form data/file uploads
+# pydantic[email] # Already a dependency of fastapi, but can specify for version control or extra features 
